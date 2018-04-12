@@ -44,6 +44,7 @@ x_data = df["Time"]
 y_data = df["FP1"]
 z_data = df["F7"]
 
+# Plotting all the electrodes, each in separate subplots
 df.head()
 df.plot(
     x=x,
@@ -51,18 +52,3 @@ df.plot(
     legend=False
 )
 plt.show()
-
-# print(data.column.values)
-
-# print(get_headers(data))
-
-# start_row = 0
-# stop_row = 5
-
-# print(get_elements_for_header_from_rows(data, "Time", start_row, stop_row))
-# print(get_elements_for_header_from_rows(data, "FP1", start_row, stop_row))
-
-# plot_data(
-#     get_elements_for_header_from_rows(data, "Time", start_row, stop_row),
-#     get_elements_for_header_from_rows(data, "FP1", start_row, stop_row),
-#     'r')
