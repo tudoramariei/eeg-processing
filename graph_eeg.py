@@ -52,7 +52,6 @@ def plot_power_spectrum_periodogram(data):
         )
 
     plt.semilogy(f, pxx)
-    plt.xlim(0, 256)
     plt.show()
 
 
@@ -67,7 +66,6 @@ def plot_data(x_data, y_data, color):
 
 
 data_set = get_pandas_data_set(3)
-
 FP1_data = data_set["FP1"]
 
 plot_power_spectrum_periodogram(FP1_data)
