@@ -149,4 +149,3 @@ def get_butter(df):
 df, time_df = get_pandas_data_set(2)
 df = get_butter(df)
 
-plt.show()
