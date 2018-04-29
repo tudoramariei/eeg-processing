@@ -4,10 +4,39 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 
+def drop_column(df, column_name):
+    """
+    Drop a column from a dataframe if it exists
+    """
+
+    if column_name in df.columns:
+        df = df.drop(columns=[column_name])
+    return df
+
+
+def drop_zero_columns(df):
+    """
+    Drop all columns from a dataframe if they are composed of only zeros
+    """
+
+    return df.loc[:, (df != 0).any(axis=0)]
+
+
+def get_column(df, column_name):
+    """
+    Get a column from a dataframe if it exists
+    """
+
+    if column_name in df.columns:
+        return df[column_name]
+    return None
+
+
 def get_headers(df):
     """
     Passes a dataframe and returns the headers for it
     """
+
     return df.columns.values
 
 
@@ -33,7 +62,11 @@ def get_pandas_data_set(selected_data_set):
         "TUI4_VTE_Boxes_[2017.06.14-11.20.56].csv",
         "TUI4_VTE_Complex_[2017.06.14-11.22.59].csv",
         "TUI4_VTE_Rest_[2017.06.14-11.07.20].csv",
-        "TUI5_3Back-[2017.05.24-15.48.50].csv"
+        "TUI5_3Back-[2017.05.24-15.48.50].csv",
+        "Irina-1-14.04.18.22.08.52.csv",
+        "Irina-2-14.04.18.22.12.13.csv",
+        "Irina-2back-14.04.18.22.19.03.csv",
+        "Irina-3back-14.04.18.22.21.01.csv"
     ]
 
     csv_file = (
@@ -41,22 +74,29 @@ def get_pandas_data_set(selected_data_set):
         "{0}".format(csv_sets[selected_data_set])
     )
 
+    _delimiter = ','
+    if ';' in open(csv_file).read():
+        _delimiter = ';'
+
     df = pd.read_csv(
         csv_file,
-        delimiter=';'
+        delimiter=_delimiter
     )
 
-    time = df['Time (s)']
+    # if data is from the test data set
+    time = get_column(df, 'Time (s)')
 
-    df = df.drop(columns=[
-        'Time (s)',
-        'Sampling Rate'
-    ])
+    df = drop_column(df, 'Time (s)')
+    df = drop_column(df, 'Sampling Rate')
+    df = drop_column(df, 'Reference')
 
-    if 'Reference' in df.columns:
-        df = df.drop(columns=[
-            'Reference'
-        ])
+    # if the data is from the epoc
+    time = get_column(df, 'TIME_STAMP_ms')
+
+    df = drop_zero_columns(df)
+    df = drop_column(df, 'TIME_STAMP_ms')
+    df = drop_column(df, 'TIME_STAMP_s')
+    df = drop_column(df, 'COUNTER')
 
     return data_normalization(df), time
 
@@ -120,7 +160,7 @@ def butter_bandpass_filter(data_vector):
 
     _lowcut_freq = 0.5
     _highcut_freq = 5.0
-    _sampling_rate = 512
+    _sampling_rate = 128
     _order = 4
 
     a, b = butter_bandpass(
@@ -146,6 +186,9 @@ def get_butter(df):
     return df
 
 
-df, time_df = get_pandas_data_set(2)
+df, time_df = get_pandas_data_set(7)
+selected_df = 'F3'
+plt.figure(1)
+plt.plot(time_df, df[selected_df], 'b')
 df = get_butter(df)
-
+plot_data(time_df, df[selected_df])
