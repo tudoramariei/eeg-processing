@@ -4,40 +4,50 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 
-def drop_column(df, column_name):
+def plot_data(x_data, y_data, color='r'):
+    """
+    A simple method to quickly plot basic data
+    It helps with not forgetting to plot() and show()
+    """
+
+    plt.plot(x_data, y_data, color)
+    plt.show()
+
+
+def drop_column(dataframe, column_name):
     """
     Drop a column from a dataframe if it exists
     """
 
-    if column_name in df.columns:
-        df = df.drop(columns=[column_name])
-    return df
+    if column_name in dataframe.columns:
+        dataframe = dataframe.drop(columns=[column_name])
+    return dataframe
 
 
-def drop_zero_columns(df):
+def drop_zero_columns(dataframe):
     """
     Drop all columns from a dataframe if they are composed of only zeros
     """
 
-    return df.loc[:, (df != 0).any(axis=0)]
+    return dataframe.loc[:, (dataframe != 0).any(axis=0)]
 
 
-def get_column(df, column_name):
+def get_column(dataframe, column_name):
     """
     Get a column from a dataframe if it exists
     """
 
-    if column_name in df.columns:
-        return df[column_name]
+    if column_name in dataframe.columns:
+        return dataframe[column_name]
     return None
 
 
-def get_headers(df):
+def get_headers(dataframe):
     """
     Passes a dataframe and returns the headers for it
     """
 
-    return df.columns.values
+    return dataframe.columns.values
 
 
 def data_normalization(dataframe):
@@ -55,7 +65,7 @@ def get_pandas_data_set(selected_data_set):
     The list is statically built based on the files we have in ./resurse/
     """
 
-    csv_sets = [
+    _csv_sets = [
         "Tibi1_rest1_[2017.06.14-11.25.26].csv",
         "TUI04_2back_[2017.06.14-11.11.18].csv",
         "TUI4_VTE_1Random_[2017.06.14-11.15.03].csv",
@@ -69,36 +79,38 @@ def get_pandas_data_set(selected_data_set):
         "Irina-3back-14.04.18.22.21.01.csv"
     ]
 
-    csv_file = (
+    _csv_file = (
         "resurse/"
-        "{0}".format(csv_sets[selected_data_set])
+        "{0}".format(_csv_sets[selected_data_set])
     )
 
     _delimiter = ','
-    if ';' in open(csv_file).read():
+    if ';' in open(_csv_file).read():
         _delimiter = ';'
 
-    df = pd.read_csv(
-        csv_file,
+    _dataframe = pd.read_csv(
+        _csv_file,
         delimiter=_delimiter
     )
 
-    # if data is from the test data set
-    time = get_column(df, 'Time (s)')
+    if ',' is _delimiter:
+        # if the data is from the epoc
+        _time = get_column(_dataframe, 'TIME_STAMP_ms')
 
-    df = drop_column(df, 'Time (s)')
-    df = drop_column(df, 'Sampling Rate')
-    df = drop_column(df, 'Reference')
+        _dataframe = drop_zero_columns(_dataframe)
+        _dataframe = drop_column(_dataframe, 'TIME_STAMP_ms')
+        _dataframe = drop_column(_dataframe, 'TIME_STAMP_s')
+        _dataframe = drop_column(_dataframe, 'COUNTER')
+    else:
+        # if data is from the test data set
+        _time = get_column(_dataframe, 'Time (s)')
 
-    # if the data is from the epoc
-    time = get_column(df, 'TIME_STAMP_ms')
+        _dataframe = drop_column(_dataframe, 'Time (s)')
+        _dataframe = drop_column(_dataframe, 'Sampling Rate')
+        _dataframe = drop_column(_dataframe, 'Reference')
 
-    df = drop_zero_columns(df)
-    df = drop_column(df, 'TIME_STAMP_ms')
-    df = drop_column(df, 'TIME_STAMP_s')
-    df = drop_column(df, 'COUNTER')
-
-    return data_normalization(df), time
+    print(get_headers(_dataframe))
+    return data_normalization(_dataframe), _time
 
 
 def plot_power_spectrum_periodogram(data):
@@ -117,16 +129,6 @@ def plot_power_spectrum_periodogram(data):
         )
 
     plt.semilogy(f, pxx)
-    plt.show()
-
-
-def plot_data(x_data, y_data, color='r'):
-    """
-    A simple method to quickly plot basic data
-    It helps with not forgetting to plot() and show()
-    """
-
-    plt.plot(x_data, y_data, color)
     plt.show()
 
 
@@ -158,10 +160,10 @@ def butter_bandpass_filter(data_vector):
     Filters the signal with the designated butterworth bandpass filter
     """
 
-    _lowcut_freq = 0.5
     _highcut_freq = 5.0
-    _sampling_rate = 128
+    _lowcut_freq = 0.5
     _order = 4
+    _sampling_rate = 128
 
     a, b = butter_bandpass(
         _lowcut_freq,
@@ -174,21 +176,16 @@ def butter_bandpass_filter(data_vector):
     return y
 
 
-def get_butter(df):
+def get_butterworth(dataframe):
     """
     Filters the dataframe with a butterworth bandpass filter
     """
 
-    for column in df.columns.values:
-        df_column = df[column]
-        df[column] = butter_bandpass_filter(df_column)
+    for column in dataframe.columns.values:
+        df_column = dataframe[column]
+        dataframe[column] = butter_bandpass_filter(df_column)
 
-    return df
-
+    return dataframe
 
 df, time_df = get_pandas_data_set(7)
-selected_df = 'F3'
-plt.figure(1)
-plt.plot(time_df, df[selected_df], 'b')
-df = get_butter(df)
-plot_data(time_df, df[selected_df])
+df = get_butterworth(df)
