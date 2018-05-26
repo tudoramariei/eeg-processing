@@ -296,8 +296,6 @@ _, pf_theta1 = get_df_power_spectrum(df_theta1)
 _, pf_alpha1 = get_df_power_spectrum(df_alpha1)
 _, pf_beta1 = get_df_power_spectrum(df_beta1)
 
-cols = ['l', 'r']
-
 delta_assym = get_frontal_assymetry(pf_delta1)
 theta_assym = get_frontal_assymetry(pf_theta1)
 alpha_assym = get_frontal_assymetry(pf_alpha1)
