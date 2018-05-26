@@ -301,8 +301,6 @@ theta_assym = get_frontal_assymetry(pf_theta1)
 alpha_assym = get_frontal_assymetry(pf_alpha1)
 beta_assym = get_frontal_assymetry(pf_beta1)
 
-# look at page 47 of the doc
-# do this for each band:
 plt.plot(f, beta_assym)
 plt.xlim(0.5, 30)
 plt.show()
