@@ -234,7 +234,7 @@ def bandpass_filter(filter, data_vector, low_freq, high_freq):
     _nyq = 0.5 * get_sampling_rate()
     _low = low_freq/_nyq
     _high = high_freq/_nyq
-    _btype = 'band'
+    _btype = 'bandpass'
 
     if filter is 'cheby1':
         b, a = sig.cheby1(
