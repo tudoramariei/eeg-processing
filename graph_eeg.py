@@ -1,10 +1,22 @@
 from copy import copy as cpy
-from math import log
-from scipy.signal import butter, cheby1, freqz, lfilter, periodogram
+from matplotlib import pyplot as plt
+from math import log as ln
+from scipy import signal as sig
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+
+_delta_lf = 0.5
+_delta_hf = 4.0
+
+_theta_lf = 4.0
+_theta_hf = 7.0
+
+_alpha_lf = 7.0
+_alpha_hf = 12.0
+
+_beta_lf = 12.0
+_beta_hf = 30.0
 
 
 def get_headers(dtf):
@@ -52,7 +64,7 @@ def get_pandas_data_set(
     sel_game,
     wf,
     start_row,
-    num_rows,
+    num_rows=None,
     skipped_seconds=0
 ):
     """
@@ -100,14 +112,14 @@ def get_pandas_data_set(
 
 def get_bandpass_filter(df_filter, low, high, order):
     if df_filter is 'cheby1':
-        b, a = cheby1(
+        b, a = sig.cheby1(
             rp=5,
             N=order,
             Wn=[low, high],
             btype='bandpass'
         )
     elif df_filter is 'butter':
-        b, a = butter(
+        b, a = sig.butter(
             N=order,
             Wn=[low, high],
             btype='bandpass'
@@ -128,7 +140,7 @@ def bandpass_filter(df_filter, data_vector, low_freq, high_freq):
 
     b, a = get_bandpass_filter(df_filter, _low, _high, _order)
 
-    y = lfilter(b, a, data_vector)
+    y = sig.lfilter(b, a, data_vector)
 
     return y
 
@@ -161,18 +173,6 @@ def get_frequency_bands(df_filter, dtf):
         beta [12, 30]
     """
 
-    _delta_lf = 0.5
-    _delta_hf = 4.0
-
-    _theta_lf = 4.0
-    _theta_hf = 7.0
-
-    _alpha_lf = 7.0
-    _alpha_hf = 12.0
-
-    _beta_lf = 12.0
-    _beta_hf = 30.0
-
     _delta1 = get_filtered_df(df_filter, dtf, _delta_lf, _delta_hf)
     _theta1 = get_filtered_df(df_filter, dtf, _theta_lf, _theta_hf)
     _alpha1 = get_filtered_df(df_filter, dtf, _alpha_lf, _alpha_hf)
@@ -182,24 +182,12 @@ def get_frequency_bands(df_filter, dtf):
 
 
 def subplot_freq_bands(
-    freq, delta, theta, alpha, beta, text, mode, fig_num
+    freq, delta, theta, alpha, beta, text, mode, fig_num, save_fig
 ):
     if mode is True:
         fig, axes = plt.subplots(nrows=4, ncols=6)
     else:
         fig, axes = plt.subplots(2, 2)
-
-    _delta_lf = 0.5
-    _delta_hf = 4.0
-
-    _theta_lf = 4.0
-    _theta_hf = 7.0
-
-    _alpha_lf = 7.0
-    _alpha_hf = 12.0
-
-    _beta_lf = 12.0
-    _beta_hf = 30.0
 
     axes[0, 0].plot(freq, delta, 'r')
     axes[0, 0].set_xlim(_delta_lf, _delta_hf)
@@ -220,7 +208,9 @@ def subplot_freq_bands(
     fig.subplots_adjust(hspace=0.4)
     fig.subplots_adjust(wspace=0.2)
 
-    plt.savefig("subplots/subplot{0}.png".format(fig_num))
+    if save_fig:
+        plt.savefig("subplots/subplot{0}.png".format(format(fig_num, '0>3')))
+        plt.close()
 
 
 def get_power_spectrum(data_vector):
@@ -228,14 +218,12 @@ def get_power_spectrum(data_vector):
     Create a power spectrum for a single channel using the periodogram method
     """
 
-    f, pxx = periodogram(
+    return sig.periodogram(
         data_vector,
         fs=get_s_rate(),
         window='boxcar',
         scaling='spectrum'
     )
-
-    return f, pxx
 
 
 def get_df_power_spectrum(dtf):
@@ -262,19 +250,22 @@ def get_frontal_assymetry(dtf):
     band_l = (dtf['FP1'] + dtf['F7'] + dtf['F3']) / 3
     band_r = (dtf['FP2'] + dtf['F8'] + dtf['F4']) / 3
     band_math = abs(band_l - band_r)/(band_l + band_r)
-    band_assym = [log(y) for y in band_math]
+    band_assym = [ln(y) for y in band_math]
 
     return np.abs(band_assym)
 
 
-def get_assym(work_file, st_row, num_rows=0):
+def get_assym(work_file, st_row, num_rows=None):
+    """
+    Processes the work_file to get a number of num_row
+    starting with row 'st_row'
+    """
+
     df, _ = get_pandas_data_set(
-        sel_user=1,
-        sel_game='A',
-        wf=work_file,
-        start_row=st_row,
-        num_rows=num_rows
+        sel_user=1, sel_game='A',
+        wf=work_file, start_row=st_row, num_rows=num_rows
     )
+
     df_filt = 'cheby1'
     f_df = get_filtered_df(df_filt, df, 0.5, 100)
 
@@ -297,8 +288,7 @@ def get_assym(work_file, st_row, num_rows=0):
 
 
 def get_selected_file_name(
-    sel_user,
-    sel_game
+    sel_user, sel_game
 ):
     """
     Returns the name of the file which will be used
@@ -313,61 +303,53 @@ def get_selected_file_name(
     return _csv_file
 
 
-def val_in_l_h(
-    use_arr,
-    ref_arr,
-    low,
-    high
+def get_values_between_l_h(
+    use_arr, ref_arr,
+    low, high
 ):
+    """
+    Gets the value from the use_arr
+    based on values between low and high from ref_arr
+    """
+
     indices = np.where(np.logical_and(ref_arr > low, ref_arr < high))[0]
     return np.take(use_arr, indices)
 
 
-def get_file_assymetry(num_sequences):
-    _num_rows = 1024
-    _work_file = get_selected_file_name(sel_user=1, sel_game='A')
+_num_rows = 1024
+_work_file = get_selected_file_name(sel_user=1, sel_game='A')
 
-    delta_max_list = []
-    theta_max_list = []
-    alpha_max_list = []
-    beta_max_list = []
+delta_max_list = []
+theta_max_list = []
+alpha_max_list = []
+beta_max_list = []
 
-    for i in range(0, num_sequences):
-        f, d_a, t_a, a_a, b_a = get_assym(_work_file, _num_rows*i, _num_rows)
+num_sequences = 3
 
-        subplot_freq_bands(
-            freq=f, delta=d_a, theta=t_a, alpha=a_a, beta=b_a,
-            text="asym", mode=False, fig_num=i)
+for i in range(0, num_sequences):
+    f, d_a, t_a, a_a, b_a = get_assym(_work_file, _num_rows*i, _num_rows)
 
-        _delta_lf = 0.5
-        _delta_hf = 4.0
+    subplot_freq_bands(
+        freq=f, delta=d_a, theta=t_a, alpha=a_a, beta=b_a,
+        text="asym", mode=False, fig_num=i,
+        save_fig=True)
 
-        _theta_lf = 4.0
-        _theta_hf = 7.0
+    delta_max_list.append(
+        np.amax(
+            get_values_between_l_h(
+                d_a, f, _delta_lf, _delta_hf)))
 
-        _alpha_lf = 7.0
-        _alpha_hf = 12.0
+    theta_max_list.append(
+        np.amax(
+            get_values_between_l_h(
+                t_a, f, _theta_lf, _theta_hf)))
 
-        _beta_lf = 12.0
-        _beta_hf = 30.0
+    alpha_max_list.append(
+        np.amax(
+            get_values_between_l_h(
+                a_a, f, _alpha_lf, _alpha_hf)))
 
-        d_a_lim = val_in_l_h(d_a, f, _delta_lf, _delta_hf)
-        t_a_lim = val_in_l_h(t_a, f, _theta_lf, _theta_hf)
-        a_a_lim = val_in_l_h(a_a, f, _alpha_lf, _alpha_hf)
-        b_a_lim = val_in_l_h(b_a, f, _beta_lf, _beta_hf)
-
-        d_a_max = np.amax(d_a_lim)
-        t_a_max = np.amax(t_a_lim)
-        a_a_max = np.amax(a_a_lim)
-        b_a_max = np.amax(b_a_lim)
-
-        delta_max_list.append(d_a_max)
-        theta_max_list.append(t_a_max)
-        alpha_max_list.append(a_a_max)
-        beta_max_list.append(b_a_max)
-
-    plt.close('all')
-    plt.plot(delta_max_list)
-    plt.show()
-
-get_file_assymetry(10)
+    beta_max_list.append(
+        np.amax(
+            get_values_between_l_h(
+                b_a, f, _beta_lf, _beta_hf)))
