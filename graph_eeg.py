@@ -98,7 +98,7 @@ def get_pandas_data_set(
         _dtf = drop_column(_dtf, 'TIME_STAMP_s')
         _dtf = drop_column(_dtf, 'COUNTER')
     else:
-        # if data is from the test data set
+        # if data is from the user test data set
         _time = get_column(_dtf, 'Time (s)')
 
         _dtf = drop_column(_dtf, 'Time (s)')
