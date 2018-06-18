@@ -11,13 +11,13 @@ import time
 _delta_lf = 0.5
 _delta_hf = 4.0
 
-_theta_lf = 4.0
+_theta_lf = _delta_hf
 _theta_hf = 7.0
 
-_alpha_lf = 7.0
+_alpha_lf = _theta_hf
 _alpha_hf = 12.0
 
-_beta_lf = 12.0
+_beta_lf = _alpha_hf
 _beta_hf = 30.0
 
 
@@ -145,25 +145,29 @@ def subplot_bands(
         axes[0, 0].plot(y, delta, 'r')
         axes[0, 0].set_xlim(_delta_lf, _delta_hf)
         axes[0, 0].set_ylim(ylim_l, ylim_h)
-        axes[0, 0].set_title(("delta [0.5, 4] {}").format(folder))
+        axes[0, 0].set_title(("delta [{1}, {2}] {0}").format(
+            folder, _delta_lf, _delta_hf))
         axes[0, 0].set(xlabel=xlab, ylabel=ylab)
 
         axes[0, 1].plot(y, theta, 'r')
         axes[0, 1].set_xlim(_theta_lf, _theta_hf)
         axes[0, 1].set_ylim(ylim_l, ylim_h)
-        axes[0, 1].set_title(("theta [4, 7] {}").format(folder))
+        axes[0, 1].set_title(("theta [{1}, {2}] {0}").format(
+            folder, _theta_lf, _theta_hf))
         axes[0, 1].set(xlabel=xlab, ylabel=ylab)
 
         axes[1, 0].plot(y, alpha, 'r')
         axes[1, 0].set_xlim(_alpha_lf, _alpha_hf)
         axes[1, 0].set_ylim(ylim_l, ylim_h)
-        axes[1, 0].set_title(("alpha [7, 12] {}").format(folder))
+        axes[1, 0].set_title(("alpha [{1}, {2}] {0}").format(
+            folder, _alpha_lf, _alpha_hf))
         axes[1, 0].set(xlabel=xlab, ylabel=ylab)
 
         axes[1, 1].plot(y, beta, 'r')
         axes[1, 1].set_xlim(_beta_lf, _beta_hf)
         axes[1, 1].set_ylim(ylim_l, ylim_h)
-        axes[1, 1].set_title(("beta [12, 30] {}").format(folder))
+        axes[1, 1].set_title(("beta [{1}, {2}] {0}").format(
+            folder, _beta_lf, _beta_hf))
         axes[1, 1].set(xlabel=xlab, ylabel=ylab)
 
         fig.subplots_adjust(hspace=0.4)
