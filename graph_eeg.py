@@ -6,7 +6,6 @@ from scipy import signal as sig
 
 import numpy as np
 import pandas as pd
-import time
 
 _delta_lf = 0.5
 _delta_hf = 4.0
@@ -62,19 +61,10 @@ def get_s_rate():
 
 
 def get_bandpass_filter(df_filter, low, high, order):
-    if df_filter is 'cheby1':
-        b, a = sig.cheby1(
-            rp=5,
-            N=order,
-            Wn=[low, high],
-            btype='bandpass'
-        )
-    elif df_filter is 'butter':
-        b, a = sig.butter(
-            N=order,
-            Wn=[low, high],
-            btype='bandpass'
-        )
+    if df_filter is "cheby1":
+        b, a = sig.cheby1(rp=5, N=order, Wn=[low, high], btype="bandpass")
+    elif df_filter is "butter":
+        b, a = sig.butter(N=order, Wn=[low, high], btype="bandpass")
 
     return b, a
 
@@ -86,8 +76,8 @@ def bandpass_filter(df_filter, data_vector, low_freq, high_freq):
 
     _order = 4
     _nyq = 0.5 * get_s_rate()
-    _low = low_freq/_nyq
-    _high = high_freq/_nyq
+    _low = low_freq / _nyq
+    _high = high_freq / _nyq
 
     b, a = get_bandpass_filter(df_filter, _low, _high, _order)
 
@@ -105,12 +95,7 @@ def get_filtered_df(df_filter, dtf, _lowcut_freq, _highcut_freq):
 
     for column in dtf.columns.values:
         df_column = cpy(dtf[column])
-        dtf_aux[column] = bandpass_filter(
-            df_filter,
-            df_column,
-            _lowcut_freq,
-            _highcut_freq
-        )
+        dtf_aux[column] = bandpass_filter(df_filter, df_column, _lowcut_freq, _highcut_freq)
 
     return dtf_aux
 
@@ -132,51 +117,39 @@ def get_frequency_bands(df_filter, dtf):
     return _delta1, _theta1, _alpha1, _beta1
 
 
-def subplot_bands(
-    y, delta, theta, alpha, beta,
-    ylim_l, ylim_h,
-    folder, fig_num,
-    save_fig, is_active,
-    xlab, ylab
-):
+def subplot_bands(y, delta, theta, alpha, beta, ylim_l, ylim_h, folder, fig_num, save_fig, is_active, xlab, ylab):
     if is_active:
         fig, axes = plt.subplots(2, 2)
 
-        axes[0, 0].plot(y, delta, 'r')
+        axes[0, 0].plot(y, delta, "r")
         axes[0, 0].set_xlim(_delta_lf, _delta_hf)
         axes[0, 0].set_ylim(ylim_l, ylim_h)
-        axes[0, 0].set_title(("delta [{1}, {2}] {0}").format(
-            folder, _delta_lf, _delta_hf))
+        axes[0, 0].set_title(("delta [{1}, {2}] {0}").format(folder, _delta_lf, _delta_hf))
         axes[0, 0].set(xlabel=xlab, ylabel=ylab)
 
-        axes[0, 1].plot(y, theta, 'r')
+        axes[0, 1].plot(y, theta, "r")
         axes[0, 1].set_xlim(_theta_lf, _theta_hf)
         axes[0, 1].set_ylim(ylim_l, ylim_h)
-        axes[0, 1].set_title(("theta [{1}, {2}] {0}").format(
-            folder, _theta_lf, _theta_hf))
+        axes[0, 1].set_title(("theta [{1}, {2}] {0}").format(folder, _theta_lf, _theta_hf))
         axes[0, 1].set(xlabel=xlab, ylabel=ylab)
 
-        axes[1, 0].plot(y, alpha, 'r')
+        axes[1, 0].plot(y, alpha, "r")
         axes[1, 0].set_xlim(_alpha_lf, _alpha_hf)
         axes[1, 0].set_ylim(ylim_l, ylim_h)
-        axes[1, 0].set_title(("alpha [{1}, {2}] {0}").format(
-            folder, _alpha_lf, _alpha_hf))
+        axes[1, 0].set_title(("alpha [{1}, {2}] {0}").format(folder, _alpha_lf, _alpha_hf))
         axes[1, 0].set(xlabel=xlab, ylabel=ylab)
 
-        axes[1, 1].plot(y, beta, 'r')
+        axes[1, 1].plot(y, beta, "r")
         axes[1, 1].set_xlim(_beta_lf, _beta_hf)
         axes[1, 1].set_ylim(ylim_l, ylim_h)
-        axes[1, 1].set_title(("beta [{1}, {2}] {0}").format(
-            folder, _beta_lf, _beta_hf))
+        axes[1, 1].set_title(("beta [{1}, {2}] {0}").format(folder, _beta_lf, _beta_hf))
         axes[1, 1].set(xlabel=xlab, ylabel=ylab)
 
         fig.subplots_adjust(hspace=0.4)
         fig.subplots_adjust(wspace=0.2)
 
         if save_fig is True:
-            plt.savefig("subplots/{1}/sub_{1}_{0}.png".format(
-                format(fig_num+1, '0>3'),
-                folder))
+            plt.savefig("subplots/{1}/sub_{1}_{0}.png".format(format(fig_num + 1, "0>3"), folder))
 
         plt.close(fig)
 
@@ -186,12 +159,7 @@ def get_power_spectrum(data_vector):
     Create a power spectrum for a single channel using the periodogram method
     """
 
-    return sig.periodogram(
-        data_vector,
-        fs=get_s_rate(),
-        window='boxcar',
-        scaling='spectrum'
-    )
+    return sig.periodogram(data_vector, fs=get_s_rate(), window="boxcar", scaling="spectrum")
 
 
 def get_df_power_spectrum(dtf):
@@ -210,15 +178,15 @@ def get_df_power_spectrum(dtf):
     return f, df_pxx
 
 
-def get_frontal_assymetry(dtf):
+def get_frontal_asymmetry(dtf):
     """
-    Calculates the frontal assymetry of the dataset
+    Calculates the frontal asymmetry of the dataset
     """
 
-    band_l = (dtf['FP1'] + dtf['F7'] + dtf['F3']) / 3
-    band_r = (dtf['FP2'] + dtf['F8'] + dtf['F4']) / 3
+    band_l = (dtf["FP1"] + dtf["F7"] + dtf["F3"]) / 3
+    band_r = (dtf["FP2"] + dtf["F8"] + dtf["F4"]) / 3
 
-    band_math = abs(band_l - band_r)/(band_l + band_r)
+    band_math = abs(band_l - band_r) / (band_l + band_r)
     band_assym = [ln(y) for y in band_math]
 
     return band_assym
@@ -229,13 +197,13 @@ def ln_arr(arr):
     return np.array(ln_of_arr)
 
 
-def get_log_frontal_assymetry(dtf):
+def get_log_frontal_asymmetry(dtf):
     """
-    Calculates the frontal assymetry of the dataset
+    Calculates the frontal asymmetry of the dataset
     """
 
-    band_l = (dtf['FP1'] + dtf['F7'] + dtf['F3']) / 3
-    band_r = (dtf['FP2'] + dtf['F8'] + dtf['F4']) / 3
+    band_l = (dtf["FP1"] + dtf["F7"] + dtf["F3"]) / 3
+    band_r = (dtf["FP2"] + dtf["F8"] + dtf["F4"]) / 3
 
     up_math = band_l.apply(np.log) - band_r.apply(np.log)
     dn_math = band_l.apply(np.log) + band_r.apply(np.log)
@@ -251,15 +219,13 @@ def get_assym(dtf, i, num_rows):
     starting with row 'st_row'
     """
     st_row = num_rows * i
-    _df = dtf.iloc[st_row:(st_row+num_rows)]
+    _df = dtf.iloc[st_row : (st_row + num_rows)]
 
-    _df_filt = 'cheby1'
+    _df_filt = "cheby1"
     _f_df = get_filtered_df(_df_filt, _df, 0.5, 100)
 
-    _fb_filt = 'cheby1'
-    df_delta1, df_theta1, df_alpha1, df_beta1 = get_frequency_bands(
-        _fb_filt,
-        _f_df)
+    _fb_filt = "cheby1"
+    df_delta1, df_theta1, df_alpha1, df_beta1 = get_frequency_bands(_fb_filt, _f_df)
 
     f, pf_delta1 = get_df_power_spectrum(df_delta1)
     _, pf_theta1 = get_df_power_spectrum(df_theta1)
@@ -267,25 +233,30 @@ def get_assym(dtf, i, num_rows):
     _, pf_beta1 = get_df_power_spectrum(df_beta1)
 
     subplot_bands(
-        y=f, delta=pf_delta1, theta=pf_theta1,
-        alpha=pf_alpha1, beta=pf_beta1,
-        ylim_l=None, ylim_h=None,
-        folder="ps", fig_num=i,
-        is_active=True, save_fig=True,
-        xlab='epocs', ylab='index')
+        y=f,
+        delta=pf_delta1,
+        theta=pf_theta1,
+        alpha=pf_alpha1,
+        beta=pf_beta1,
+        ylim_l=None,
+        ylim_h=None,
+        folder="ps",
+        fig_num=i,
+        is_active=True,
+        save_fig=True,
+        xlab="epocs",
+        ylab="index",
+    )
 
-    delta_assym = get_log_frontal_assymetry(pf_delta1)
-    theta_assym = get_log_frontal_assymetry(pf_theta1)
-    alpha_assym = get_log_frontal_assymetry(pf_alpha1)
-    beta_assym = get_log_frontal_assymetry(pf_beta1)
+    delta_assym = get_log_frontal_asymmetry(pf_delta1)
+    theta_assym = get_log_frontal_asymmetry(pf_theta1)
+    alpha_assym = get_log_frontal_asymmetry(pf_alpha1)
+    beta_assym = get_log_frontal_asymmetry(pf_beta1)
 
     return f, delta_assym, theta_assym, alpha_assym, beta_assym
 
 
-def get_values_between_l_h(
-    use_arr, ref_arr,
-    low, high
-):
+def get_values_between_l_h(use_arr, ref_arr, low, high):
     """
     Gets the value from the use_arr
     based on values between low and high from ref_arr
@@ -295,25 +266,17 @@ def get_values_between_l_h(
     return np.take(use_arr.values, indices)
 
 
-def get_selected_file_name(
-    sel_user, sel_game
-):
+def get_selected_file_name(sel_user, sel_game):
     """
     Returns the name of the file which will be used
     """
 
-    if sel_game in ('A', 'B', 'C', 'D', 'E', 'F'):
+    if sel_game in ("A", "B", "C", "D", "E", "F"):
         print("Working with file: USER{0}_game_{1}".format(sel_user, sel_game))
-        _csv_file = (
-            "resurse/"
-            "USER{0}_game_{1}.csv".format(sel_user, sel_game)
-        )
+        _csv_file = "resurse/" "USER{0}_game_{1}.csv".format(sel_user, sel_game)
     else:
         print("Working with file: USER{0}_{1}".format(sel_user, sel_game))
-        _csv_file = (
-            "resurse/"
-            "USER{0}_{1}.csv".format(sel_user, sel_game)
-        )
+        _csv_file = "resurse/" "USER{0}_{1}.csv".format(sel_user, sel_game)
 
     return _csv_file
 
@@ -325,8 +288,8 @@ def get_dataframe(work_file, skip_rows=0):
 
     global s_rate
 
-    _delimiter = ','
-    if ';' in open(work_file).read():
+    _delimiter = ","
+    if ";" in open(work_file).read():
         print("Delimiter is ';' so please replace")
         exit(1)
 
@@ -335,126 +298,120 @@ def get_dataframe(work_file, skip_rows=0):
     else:
         skip_r = range(1, skip_rows)
 
-    _dtf = pd.read_csv(
-        work_file,
-        delimiter=_delimiter,
-        skiprows=skip_r
-    )
+    _dtf = pd.read_csv(work_file, delimiter=_delimiter, skiprows=skip_r)
 
-    if ',' is _delimiter:
+    if "," is _delimiter:
         # if the data is from the epoc
         # _time = get_column(_dtf, 'TIME_STAMP_ms')
 
         _dtf = drop_zero_columns(_dtf)
-        _dtf = drop_column(_dtf, 'TIME_STAMP_ms')
-        _dtf = drop_column(_dtf, 'TIME_STAMP_s')
-        _dtf = drop_column(_dtf, 'COUNTER')
+        _dtf = drop_column(_dtf, "TIME_STAMP_ms")
+        _dtf = drop_column(_dtf, "TIME_STAMP_s")
+        _dtf = drop_column(_dtf, "COUNTER")
     else:
         # if data is from the user test data set
         # _time = get_column(_dtf, 'Time (s)')
         # _time = get_column(_dtf, 'Timestamp')
 
         # _dtf = drop_column(_dtf, 'Time (s)')
-        _dtf = drop_column(_dtf, 'Timestamp')
-        _dtf = drop_column(_dtf, 'Sampling Rate')
-        _dtf = drop_column(_dtf, 'Reference')
+        _dtf = drop_column(_dtf, "Timestamp")
+        _dtf = drop_column(_dtf, "Sampling Rate")
+        _dtf = drop_column(_dtf, "Reference")
 
-    _dtf = _dtf[['FP1', 'F7', 'F3', 'FP2', 'F8', 'F4']]
+    _dtf = _dtf[["FP1", "F7", "F3", "FP2", "F8", "F4"]]
 
     return _dtf
 
-_sel_user = 4
-_sel_game = 'B'
-_work_file = get_selected_file_name(
-    sel_user=_sel_user,
-    sel_game=_sel_game
-)
-_dataframe = get_dataframe(_work_file)
 
-# global variables declaration
-s_rate = 512
-_num_rows = 1024
-_num_sequences = 20
-_dtf_len = len(_dataframe)
-# /global variables declaration
+def main():
+    _sel_user = 4
+    _sel_game = "B"
+    _work_file = get_selected_file_name(sel_user=_sel_user, sel_game=_sel_game)
+    _dataframe = get_dataframe(_work_file)
 
-if _num_sequences is 'max':
-    _num_sequences = fl(_dtf_len / _num_rows)
-elif (_num_sequences * _num_rows) > _dtf_len:
-    print("Data requested exceeds the accessible data.")
-    print("Requsted sequences: {}".format(_num_sequences))
+    # global variables declaration
+    s_rate = 512
+    _num_rows = 1024
+    _num_sequences = 20
+    _dtf_len = len(_dataframe)
+    # /global variables declaration
+
+    if _num_sequences is "max":
+        _num_sequences = fl(_dtf_len / _num_rows)
+    elif (_num_sequences * _num_rows) > _dtf_len:
+        print("Data requested exceeds the accessible data.")
+        print("Requested sequences: {}".format(_num_sequences))
+        print("Length of sequence: {}".format(_num_rows))
+        print("\tRows requested: {}".format(_num_sequences * _num_rows))
+        print("\tData available: {}".format(_dtf_len))
+
+        print("If you want to use the full dataframe, set _num_sequences to 'max'")
+        exit(1)
+
+    print("Data requested can be obtained from the current data.")
+    print("Requested sequences: {}".format(_num_sequences))
     print("Length of sequence: {}".format(_num_rows))
-    print("\tRows requested: {}".format(_num_sequences*_num_rows))
+    print("\tRows requested: {}".format(_num_sequences * _num_rows))
     print("\tData available: {}".format(_dtf_len))
 
-    print("If you want to use the full dataframe, set _num_sequences to 'max'")
-    exit(1)
+    delta_max_list = []
+    theta_max_list = []
+    alpha_max_list = []
+    beta_max_list = []
 
-print("Data requested can be obtained from the current data.")
-print("Requsted sequences: {}".format(_num_sequences))
-print("Length of sequence: {}".format(_num_rows))
-print("\tRows requested: {}".format(_num_sequences*_num_rows))
-print("\tData available: {}".format(_dtf_len))
+    for i in range(0, _num_sequences):
+        print("Sequence {0}/{1}".format(i + 1, _num_sequences))
+        f, d_a, t_a, a_a, b_a = get_assym(_dataframe, i, _num_rows)
 
-delta_max_list = []
-theta_max_list = []
-alpha_max_list = []
-beta_max_list = []
+        subplot_bands(
+            y=f,
+            delta=d_a,
+            theta=t_a,
+            alpha=a_a,
+            beta=b_a,
+            ylim_l=-0.2,
+            ylim_h=0.2,
+            folder="asym",
+            fig_num=i,
+            is_active=True,
+            save_fig=True,
+            xlab="epocs",
+            ylab="index",
+        )
 
-for i in range(0, _num_sequences):
-    print("Sequence {0}/{1}".format(i+1, _num_sequences))
-    f, d_a, t_a, a_a, b_a = get_assym(_dataframe, i, _num_rows)
+        delta_max_list.append(np.amax(get_values_between_l_h(d_a, f, _delta_lf, _delta_hf)))
 
-    subplot_bands(
-        y=f, delta=d_a, theta=t_a,
-        alpha=a_a, beta=b_a,
-        ylim_l=-0.2, ylim_h=0.2,
-        folder="asym", fig_num=i,
-        is_active=True, save_fig=True,
-        xlab='epocs', ylab='index')
+        theta_max_list.append(np.amax(get_values_between_l_h(t_a, f, _theta_lf, _theta_hf)))
 
-    delta_max_list.append(
-        np.amax(
-            get_values_between_l_h(
-                d_a, f, _delta_lf, _delta_hf)))
+        alpha_max_list.append(np.amax(get_values_between_l_h(a_a, f, _alpha_lf, _alpha_hf)))
 
-    theta_max_list.append(
-        np.amax(
-            get_values_between_l_h(
-                t_a, f, _theta_lf, _theta_hf)))
+        beta_max_list.append(np.amax(get_values_between_l_h(b_a, f, _beta_lf, _beta_hf)))
 
-    alpha_max_list.append(
-        np.amax(
-            get_values_between_l_h(
-                a_a, f, _alpha_lf, _alpha_hf)))
+    plt.close("all")
+    fig, axes = plt.subplots(2, 2)
 
-    beta_max_list.append(
-        np.amax(
-            get_values_between_l_h(
-                b_a, f, _beta_lf, _beta_hf)))
+    axes[0, 0].plot(delta_max_list)
+    axes[0, 0].set_title("Max DELTA")
+    axes[0, 0].set(xlabel="epocs", ylabel="index")
 
-plt.close("all")
-fig, axes = plt.subplots(2, 2)
+    axes[0, 1].plot(theta_max_list)
+    axes[0, 1].set_title("Max THETA")
+    axes[0, 1].set(xlabel="epocs", ylabel="index")
 
-axes[0, 0].plot(delta_max_list)
-axes[0, 0].set_title("Max DELTA")
-axes[0, 0].set(xlabel='epocs', ylabel='index')
+    axes[1, 0].plot(alpha_max_list)
+    axes[1, 0].set_title("Max ALPHA")
+    axes[1, 0].set(xlabel="epocs", ylabel="index")
 
-axes[0, 1].plot(theta_max_list)
-axes[0, 1].set_title("Max THETA")
-axes[0, 1].set(xlabel='epocs', ylabel='index')
+    axes[1, 1].plot(beta_max_list)
+    axes[1, 1].set_title("Max BETA")
+    axes[1, 1].set(xlabel="epocs", ylabel="index")
 
-axes[1, 0].plot(alpha_max_list)
-axes[1, 0].set_title("Max ALPHA")
-axes[1, 0].set(xlabel='epocs', ylabel='index')
+    fig.subplots_adjust(hspace=0.6)
+    fig.subplots_adjust(wspace=0.5)
 
-axes[1, 1].plot(beta_max_list)
-axes[1, 1].set_title("Max BETA")
-axes[1, 1].set(xlabel='epocs', ylabel='index')
+    plt.savefig("subplots/max/sub_max_USR{0}_{1}_#{2}.png".format(_sel_user, _sel_game, _num_sequences))
+    plt.close("all")
 
-fig.subplots_adjust(hspace=0.6)
-fig.subplots_adjust(wspace=0.5)
 
-plt.savefig("subplots/max/sub_max_USR{0}_{1}_#{2}.png".format(
-    _sel_user, _sel_game, _num_sequences))
-plt.close('all')
+if __name__ == "__main__":
+    main()
